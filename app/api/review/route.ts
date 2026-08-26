@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 interface ReviewRequest {
   positions: { code: string; name: string; quantity: number; costPrice: number; currentPrice: number }[];
   news: { title: string; description: string; source: string }[];
@@ -77,7 +79,6 @@ async function callAI(prompt: string, env: Record<string, unknown>): Promise<Rec
   const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const content = json.choices?.[0]?.message?.content || "";
 
-  // 尝试提取 JSON
   const match = content.match(/\{[\s\S]*\}/);
   const parsed = JSON.parse(match ? match[0] : content) as Record<string, string>;
 
@@ -115,38 +116,27 @@ function buildDemoReview(data: ReviewRequest): Record<string, string> {
   };
 }
 
-export const onRequest: PagesFunction = async (context) => {
-  if (context.request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method Not Allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
+export async function POST(request: Request) {
   try {
-    const env = context.env as Record<string, unknown>;
+    const env = process.env as Record<string, unknown>;
     const demoMode = env.DEMO_REVIEW === "1" || env.DEMO_REVIEW === 1 || env.DEMO_REVIEW === true;
     const aiConfigured = Boolean(env.AI_API_URL && env.AI_API_KEY);
 
-    const data = (await context.request.json()) as ReviewRequest;
+    const data = (await request.json()) as ReviewRequest;
 
     if (demoMode || !aiConfigured) {
       const review = buildDemoReview(data);
-      return new Response(JSON.stringify({ ...review, demo: true, aiConfigured }), {
-        headers: { "Content-Type": "application/json" },
-      });
+      return Response.json({ ...review, demo: true, aiConfigured });
     }
 
     const prompt = buildPrompt(data);
     const review = await callAI(prompt, env);
 
-    return new Response(JSON.stringify(review), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(review);
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "生成复盘失败" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return Response.json(
+      { error: err instanceof Error ? err.message : "生成复盘失败" },
+      { status: 500 }
     );
   }
-};
+}

@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 interface NewsItem {
   title: string;
   link: string;
@@ -97,31 +99,36 @@ function filterByKeywords(items: NewsItem[], keywords: string[]): NewsItem[] {
     .slice(0, 20);
 }
 
-export const onRequest: PagesFunction = async (context) => {
-  const url = new URL(context.request.url);
-  const type = url.searchParams.get("type") || "market"; // market | holding
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type") || "market";
   const keywordsParam = url.searchParams.get("keywords") || "";
   const keywords = keywordsParam
     .split(",")
     .map((k) => k.trim())
     .filter(Boolean);
 
-  const env = context.env as Record<string, unknown>;
+  const env = process.env as Record<string, unknown>;
   const demoMode = env.DEMO_NEWS === "1" || env.DEMO_NEWS === 1 || env.DEMO_NEWS === true;
 
   if (demoMode) {
     const items = type === "holding" ? filterByKeywords(demoNews, keywords) : demoNews.slice(0, 30);
-    return new Response(JSON.stringify({ items, debug: [{ source: "演示模式", count: items.length }], fetchedAt: new Date().toISOString(), demo: true }), {
-      headers: { "Content-Type": "application/json" },
+    return Response.json({
+      items,
+      debug: [{ source: "演示模式", count: items.length }],
+      fetchedAt: new Date().toISOString(),
+      demo: true,
     });
   }
 
-  // 默认财经 RSS 源，可通过环境变量 RSS_URLS 覆盖，逗号分隔
   const defaultFeeds = [
     "https://rss.sina.com.cn/roll/finance/hot_roll.xml",
     "https://rss.sina.com.cn/tech/telecom/internet.xml",
   ];
-  const envFeeds = (env.RSS_URLS as string | undefined)?.split(",").map((s) => s.trim()).filter(Boolean);
+  const envFeeds = (env.RSS_URLS as string | undefined)
+    ?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   const feeds = envFeeds?.length ? envFeeds : defaultFeeds;
 
   try {
@@ -135,22 +142,41 @@ export const onRequest: PagesFunction = async (context) => {
             cf: { cacheTtl: 300 },
           });
           if (!res.ok) {
-            return { url: feedUrl, source: new URL(feedUrl).hostname, count: 0, status: res.status, error: `HTTP ${res.status}` };
+            return {
+              url: feedUrl,
+              source: new URL(feedUrl).hostname,
+              count: 0,
+              status: res.status,
+              error: `HTTP ${res.status}`,
+            };
           }
           const xml = await res.text();
           const items = parseRSS(xml, new URL(feedUrl).hostname);
-          return { url: feedUrl, source: new URL(feedUrl).hostname, count: items.length, status: res.status, items };
+          return {
+            url: feedUrl,
+            source: new URL(feedUrl).hostname,
+            count: items.length,
+            status: res.status,
+            items,
+          };
         } catch (err) {
-          return { url: feedUrl, source: new URL(feedUrl).hostname, count: 0, status: 0, error: err instanceof Error ? err.message : "未知错误" };
+          return {
+            url: feedUrl,
+            source: new URL(feedUrl).hostname,
+            count: 0,
+            status: 0,
+            error: err instanceof Error ? err.message : "未知错误",
+          };
         }
       })
     );
 
-    let allItems = feedResults.flatMap((r) => r.items || []).sort((a, b) => {
-      return new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime();
-    });
+    let allItems = feedResults
+      .flatMap((r) => r.items || [])
+      .sort((a, b) => {
+        return new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime();
+      });
 
-    // RSS 源全部为空或失败时， fallback 到演示数据，方便本地预览
     if (allItems.length === 0) {
       allItems = demoNews;
     }
@@ -161,16 +187,20 @@ export const onRequest: PagesFunction = async (context) => {
       allItems = allItems.slice(0, 30);
     }
 
-    return new Response(JSON.stringify({ items: allItems, debug: feedResults.map((r) => ({ url: r.url, count: r.count, status: r.status, error: r.error })), fetchedAt: new Date().toISOString(), demo: false }), {
+    return Response.json({
+      items: allItems,
+      debug: feedResults.map((r) => ({ url: r.url, count: r.count, status: r.status, error: r.error })),
+      fetchedAt: new Date().toISOString(),
+      demo: false,
+    }, {
       headers: {
-        "Content-Type": "application/json",
         "Cache-Control": "public, max-age=300",
       },
     });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : "拉取新闻失败" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+    return Response.json(
+      { error: err instanceof Error ? err.message : "拉取新闻失败" },
+      { status: 500 }
     );
   }
-};
+}
