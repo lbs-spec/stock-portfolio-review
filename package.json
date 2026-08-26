@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
-    "next": "^15.5.23",
+    "next": "15.5.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.1",
@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.16",
-    "@cloudflare/workers-types": "^5.20260821.1",
+    "@cloudflare/workers-types": "^4.20240718.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -37,5 +37,8 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.125.0"
+  },
+  "overrides": {
+    "@cloudflare/workers-types": "^4.20240718.0"
   }
 }
