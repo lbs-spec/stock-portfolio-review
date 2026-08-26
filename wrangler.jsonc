@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "stock-portfolio-review",
+  "compatibility_date": "2025-08-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": ".vercel/output/static",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stock_portfolio_db",
+      "database_id": "<your-database-id>"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

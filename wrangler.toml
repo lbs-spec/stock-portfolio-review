@@ -1,0 +1,5 @@
+name = "stock-portfolio-review"
+compatibility_flags = ["nodejs_compat"]
+
+# 生产构建输出目录，本地开发使用 wrangler pages dev -- npm run dev
+pages_build_output_dir = ".vercel/output/static"

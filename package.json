@@ -1,0 +1,41 @@
+{
+  "name": "stock-portfolio-review",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:full": "concurrently \"next dev -p 3002 --hostname localhost\" \"wrangler pages dev --proxy 3002 --compatibility-date=2026-08-20\"",
+    "dev:static": "cross-env LOCAL_EXPORT=1 next build && wrangler pages dev dist --port 8794 --compatibility-date=2026-08-20",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "pages:build": "node_modules/.bin/next-on-pages",
+    "pages:deploy": "node_modules/.bin/wrangler.cmd pages deploy .vercel/output/static",
+    "pages:dev": "node_modules/.bin/wrangler.cmd pages dev .vercel/output/static --compatibility-date=2026-08-20"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "next": "^15.5.23",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "recharts": "^3.10.1",
+    "ulid": "^3.0.2",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
+    "@cloudflare/workers-types": "^5.20260821.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wrangler": "^4.125.0"
+  }
+}
