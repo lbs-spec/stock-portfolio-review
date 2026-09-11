@@ -1,3 +1,5 @@
+import { getRuntimeEnv } from "../../lib/runtime-env";
+
 export const runtime = "edge";
 
 interface ReviewRequest {
@@ -21,23 +23,23 @@ function buildPrompt(data: ReviewRequest): string {
     .map((n) => `- [${n.source}] ${n.title}: ${n.description}`)
     .join("\n");
 
-  return `你是专业股票投资助手。请根据以下持仓和今日财经新闻，生成一份完整的当日复盘报告。
+  return `你是专业的A股/港股投资顾问。请基于下面的持仓数据和最新财经新闻，为每只持仓个股给出具体、可执行的交易建议。
 
 日期：${data.date}
 
-## 持仓情况
+## 当前持仓
 ${holdings || "暂无持仓"}
 
-## 今日相关财经新闻
+## 最新财经新闻
 ${newsText || "暂无新闻"}
 
-请用中文输出以下四个部分，每部分2-4句话：
-1. 市场整体：今日大盘和主要指数表现、成交情绪
-2. 板块轮动：领涨/领跌板块、资金动向
-3. 持仓回顾：结合新闻分析持仓个股/板块表现原因
-4. 明日计划：基于消息面给出持仓操作建议（加仓/减仓/观望/止损）
+请用中文输出 JSON，包含以下四个字段：
+1. marketSummary：今日大盘和主要指数表现、成交情绪（2-3句）
+2. sectorRotation：领涨/领跌板块、资金动向（2-3句）
+3. positionReview：逐只分析持仓个股表现及原因，结合相关新闻（每只1-2句）
+4. tomorrowPlan：对每只持仓给出明确操作建议，必须包含：操作方向（加仓/减仓/持有观望/止损）、理由、参考价位或止损位；最后补充整体仓位与风控建议
 
-输出格式严格为 JSON：
+输出格式严格为 JSON（不要输出多余文字或代码块标记）：
 {
   "marketSummary": "...",
   "sectorRotation": "...",
@@ -67,7 +69,7 @@ async function callAI(prompt: string, env: Record<string, unknown>): Promise<Rec
         { role: "system", content: "你是专业股票投资助手，只输出 JSON。" },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1500,
+      max_tokens: 2000,
     }),
   });
 
@@ -118,7 +120,7 @@ function buildDemoReview(data: ReviewRequest): Record<string, string> {
 
 export async function POST(request: Request) {
   try {
-    const env = process.env as Record<string, unknown>;
+    const env = getRuntimeEnv();
     const demoMode = env.DEMO_REVIEW === "1" || env.DEMO_REVIEW === 1 || env.DEMO_REVIEW === true;
     const aiConfigured = Boolean(env.AI_API_URL && env.AI_API_KEY);
 

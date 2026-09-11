@@ -135,6 +135,12 @@ export default function PortfolioPanel() {
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">导入东方财富持仓</h2>
         <div className="mt-4 max-w-xl">
           <ExcelUploader label="点击或拖拽上传东方财富持仓模板" onFileSelect={handleImport} loading={loading} />
+          <p className="mt-2 text-xs text-zinc-500">
+            没有模板？
+            <a href="/templates/东方财富持仓模板.xlsx" download className="ml-1 text-blue-600 hover:text-blue-700">
+              下载持仓模板示例
+            </a>
+          </p>
           {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         </div>
       </section>
