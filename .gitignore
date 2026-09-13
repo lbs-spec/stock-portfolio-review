@@ -4,6 +4,11 @@
 /node_modules
 /.pnp
 .pnp.*
+
+# 锁文件不入库：npm 在 Windows 上生成的 lock 会漏掉嵌套包的其他平台可选依赖
+# （如 wrangler/node_modules/@cloudflare/workerd-linux-64），导致 Cloudflare 的 npm ci 校验失败。
+# 不提交锁文件时 Cloudflare 会改用 npm install，在 Linux 上就地解析。
+package-lock.json
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
